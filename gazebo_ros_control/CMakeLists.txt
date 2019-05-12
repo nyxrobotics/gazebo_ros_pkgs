@@ -29,7 +29,7 @@ catkin_package(
     urdf
     angles
   INCLUDE_DIRS include
-  LIBRARIES ${PROJECT_NAME} default_robot_hw_sim
+  LIBRARIES ${PROJECT_NAME} default_robot_hw_sim ginko_robot_hw_sim
 )
 
 link_directories(
@@ -48,8 +48,13 @@ target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 add_library(default_robot_hw_sim src/default_robot_hw_sim.cpp)
 target_link_libraries(default_robot_hw_sim ${catkin_LIBRARIES})
 
+add_library(ginko_robot_hw_sim src/ginko_robot_hw_sim.cpp)
+target_link_libraries(ginko_robot_hw_sim ${catkin_LIBRARIES})
+
+
+
 ## Install
-install(TARGETS ${PROJECT_NAME} default_robot_hw_sim
+install(TARGETS ${PROJECT_NAME} default_robot_hw_sim ginko_robot_hw_sim
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
 

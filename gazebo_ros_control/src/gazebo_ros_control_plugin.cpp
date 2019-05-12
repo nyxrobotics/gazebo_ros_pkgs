@@ -112,7 +112,7 @@ void GazeboRosControlPlugin::Load(gazebo::physics::ModelPtr parent, sdf::Element
 
   // temporary fix to bug regarding the robotNamespace in default_robot_hw_sim.cpp (see #637)
   std::string robot_ns = robot_namespace_;
-  if(robot_hw_sim_type_str_ == "gazebo_ros_control/DefaultRobotHWSim"){
+  if(robot_hw_sim_type_str_ == "gazebo_ros_control/DefaultRobotHWSim" || robot_hw_sim_type_str_ == "gazebo_ros_control/GinkoRobotHWSim"){
       if (sdf_->HasElement("legacyModeNS")) {
           if( sdf_->GetElement("legacyModeNS")->Get<bool>() ){
               robot_ns = "";
@@ -189,11 +189,11 @@ void GazeboRosControlPlugin::Load(gazebo::physics::ModelPtr parent, sdf::Element
       (new pluginlib::ClassLoader<gazebo_ros_control::RobotHWSim>
         ("gazebo_ros_control",
           "gazebo_ros_control::RobotHWSim"));
-
+    ROS_INFO("gazebo_ros_control:Start loading robot_hw_sim:%s",robot_hw_sim_type_str_.data());
     robot_hw_sim_ = robot_hw_sim_loader_->createInstance(robot_hw_sim_type_str_);
+    ROS_INFO("gazebo_ros_control:Finish loading robot_hw_sim:%s",robot_hw_sim_type_str_.data());
     urdf::Model urdf_model;
     const urdf::Model *const urdf_model_ptr = urdf_model.initString(urdf_string) ? &urdf_model : NULL;
-
     if(!robot_hw_sim_->initSim(robot_ns, model_nh_, parent_model_, urdf_model_ptr, transmissions_))
     {
       ROS_FATAL_NAMED("gazebo_ros_control","Could not initialize robot simulation interface");
