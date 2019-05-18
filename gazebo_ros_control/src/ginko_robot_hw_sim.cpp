@@ -173,6 +173,13 @@ bool GinkoRobotHWSim::initSim(
       joint_handle = hardware_interface::JointHandle(js_interface_.getHandle(joint_names_[j]),
                                                      &joint_velocity_command_[j]);
       vj_interface_.registerHandle(joint_handle);
+    }else if(hardware_interface == "PositionDutyPidMotorInterface" || hardware_interface == "hardware_interface/PositionDutyPidMotorInterface")
+    {
+        // Create position joint interface
+        joint_control_methods_[j] = POSITION_DUTY_PID;
+        joint_handle = hardware_interface::JointHandle(js_interface_.getHandle(joint_names_[j]),
+                                                       &joint_position_command_[j]);
+        pj_interface_.registerHandle(joint_handle);
     }
     else
     {
@@ -372,6 +379,7 @@ void GinkoRobotHWSim::writeSim(ros::Time time, ros::Duration period)
         break;
 
       case VELOCITY_PID:
+      {
         double error;
         if (e_stop_active_)
           error = -joint_velocity_[j];
@@ -381,6 +389,35 @@ void GinkoRobotHWSim::writeSim(ros::Time time, ros::Duration period)
         const double effort = clamp(pid_controllers_[j].computeCommand(error, period),
                                     -effort_limit, effort_limit);
         sim_joints_[j]->SetForce(0, effort);
+      }
+        break;
+
+
+      case POSITION_DUTY_PID:
+        {
+          double error;
+          switch (joint_types_[j])
+          {
+            case urdf::Joint::REVOLUTE:
+              angles::shortest_angular_distance_with_limits(joint_position_[j],
+                                                            joint_position_command_[j],
+                                                            joint_lower_limits_[j],
+                                                            joint_upper_limits_[j],
+                                                            error);
+              break;
+            case urdf::Joint::CONTINUOUS:
+              error = angles::shortest_angular_distance(joint_position_[j],
+                                                        joint_position_command_[j]);
+              break;
+            default:
+              error = joint_position_command_[j] - joint_position_[j];
+          }
+
+          const double effort_limit = joint_effort_limits_[j];
+          const double effort = clamp(pid_controllers_[j].computeCommand(error, period),
+                                      -effort_limit, effort_limit);
+          sim_joints_[j]->SetForce(0, effort);
+        }
         break;
     }
   }
