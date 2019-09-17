@@ -65,16 +65,17 @@
 
 // URDF
 #include <urdf/model.h>
-
-
+// Motor Model
+#include <gazebo_ros_control/motor_model.h>
 
 namespace gazebo_ros_control
 {
 
 class GinkoRobotHWSim : public gazebo_ros_control::RobotHWSim
 {
+private:
+	MotorModel motor_model_;
 public:
-
   virtual bool initSim(
     const std::string& robot_namespace,
     ros::NodeHandle model_nh,

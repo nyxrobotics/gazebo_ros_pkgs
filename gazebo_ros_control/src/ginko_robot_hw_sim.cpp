@@ -180,6 +180,8 @@ bool GinkoRobotHWSim::initSim(
         joint_handle = hardware_interface::JointHandle(js_interface_.getHandle(joint_names_[j]),
                                                        &joint_position_command_[j]);
         pj_interface_.registerHandle(joint_handle);
+        ROS_DEBUG("Registered Handler:%s",joint_names_[j].c_str());
+
     }
     else
     {
@@ -413,10 +415,18 @@ void GinkoRobotHWSim::writeSim(ros::Time time, ros::Duration period)
               error = joint_position_command_[j] - joint_position_[j];
           }
 
-          const double effort_limit = joint_effort_limits_[j];
-          const double effort = clamp(pid_controllers_[j].computeCommand(error, period),
-                                      -effort_limit, effort_limit);
+          const double duty_limit = 1.0;
+          const double duty = clamp(pid_controllers_[j].computeCommand(error, period),
+                                      -duty_limit, duty_limit);
+          const double speed = joint_velocity_[j];
+          const double effort = motor_model_.duty2Torque(duty,speed);
+//          const double effort = motor_model_.duty2Torque(duty);
           sim_joints_[j]->SetForce(0, effort);
+          static unsigned int print_count = 0;
+//          if(print_count % 255 == 0){
+//        	  printf("effort = %f",effort);
+//          }
+          print_count ++;
         }
         break;
     }
