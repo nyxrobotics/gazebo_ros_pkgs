@@ -17,7 +17,10 @@ MotorModel::MotorModel(){
 }
 MotorModel::~MotorModel(){
 }
-
+void MotorModel::setMotorModel(MotorElectricCharacteristics motor_electrics){
+	default_electric_characteristics_ = motor_electrics;
+	use_heat_sim_ = false;
+}
 double MotorModel::duty2Torque(double Duty){
 	double torque = 0.;
 	if(use_heat_sim_ == false){

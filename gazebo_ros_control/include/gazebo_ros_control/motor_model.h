@@ -48,6 +48,7 @@ public:
 	MotorModel(MotorElectricCharacteristics motor_electrics);
 	MotorModel();
 	~MotorModel();
+	void setMotorModel(MotorElectricCharacteristics motor_electrics);
 	double duty2Torque(double Duty);
 	double duty2Torque(double Duty, double Speed);
 

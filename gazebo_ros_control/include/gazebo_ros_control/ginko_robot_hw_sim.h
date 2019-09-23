@@ -73,8 +73,6 @@ namespace gazebo_ros_control
 
 class GinkoRobotHWSim : public gazebo_ros_control::RobotHWSim
 {
-private:
-	MotorModel motor_model_;
 public:
   virtual bool initSim(
     const std::string& robot_namespace,
@@ -134,6 +132,7 @@ protected:
   std::vector<double> joint_position_command_;
   std::vector<double> last_joint_position_command_;
   std::vector<double> joint_velocity_command_;
+  std::vector<MotorModel> motor_models_;
 
   std::vector<gazebo::physics::JointPtr> sim_joints_;
 

@@ -83,6 +83,7 @@ bool GinkoRobotHWSim::initSim(
   joint_effort_command_.resize(n_dof_);
   joint_position_command_.resize(n_dof_);
   joint_velocity_command_.resize(n_dof_);
+  motor_models_.resize(n_dof_);
 
   // Initialize values
   for(unsigned int j=0; j < n_dof_; j++)
@@ -222,12 +223,28 @@ bool GinkoRobotHWSim::initSim(
                         joint_limit_nh, urdf_model,
                         &joint_types_[j], &joint_lower_limits_[j], &joint_upper_limits_[j],
                         &joint_effort_limits_[j]);
+
+
     if (joint_control_methods_[j] != EFFORT)
     {
       // Initialize the PID controller. If no PID gain values are found, use joint->SetAngle() or
       // joint->SetParam("vel") to control the joint.
       const ros::NodeHandle nh(robot_namespace + "/gazebo_ros_control/pid_gains/" +
                                joint_names_[j]);
+      MotorElectricCharacteristics characteristics_tmp;
+      nh.param<double>(robot_namespace + "/gazebo_ros_control/motor_characteristics/" +
+              joint_names_[j] + "/rated_voltage" , characteristics_tmp.motor_rated_voltage_, 11.1);
+      nh.param<double>(robot_namespace + "/gazebo_ros_control/motor_characteristics/" +
+              joint_names_[j] + "/supply_voltage" , characteristics_tmp.supply_voltage_, 12.5);
+      nh.param<double>(robot_namespace + "/gazebo_ros_control/motor_characteristics/" +
+              joint_names_[j] + "/noload_speed" , characteristics_tmp.motor_noload_speed_, 9.52);
+      nh.param<double>(robot_namespace + "/gazebo_ros_control/motor_characteristics/" +
+              joint_names_[j] + "/noload_current" , characteristics_tmp.motor_noload_current_, 0.30);
+      nh.param<double>(robot_namespace + "/gazebo_ros_control/motor_characteristics/" +
+              joint_names_[j] + "/stall_torque" , characteristics_tmp.motor_stall_torque_, 2.75);
+      nh.param<double>(robot_namespace + "/gazebo_ros_control/motor_characteristics/" +
+              joint_names_[j] + "/stall_current" , characteristics_tmp.motor_stall_current_, 1.90);
+      ROS_INFO("CHARACTERISTICS:[%s] speed:%f, torque:%f",joint_names_[j].c_str(), characteristics_tmp.motor_noload_speed_, characteristics_tmp.motor_stall_torque_);
       if (pid_controllers_[j].init(nh))
       {
         switch (joint_control_methods_[j])
@@ -419,7 +436,7 @@ void GinkoRobotHWSim::writeSim(ros::Time time, ros::Duration period)
           const double duty = clamp(pid_controllers_[j].computeCommand(error, period),
                                       -duty_limit, duty_limit);
           const double speed = joint_velocity_[j];
-          const double effort = motor_model_.duty2Torque(duty,speed);
+          const double effort = motor_models_[j].duty2Torque(duty,speed);
 //          const double effort = motor_model_.duty2Torque(duty);
           sim_joints_[j]->SetForce(0, effort);
           static unsigned int print_count = 0;
