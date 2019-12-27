@@ -69,7 +69,9 @@ bool GinkoRobotHWSim::initSim(const std::string& robot_namespace,
 	joint_control_methods_.resize(n_dof_);
 	pid_controllers_.resize(n_dof_);
 	joint_position_.resize(n_dof_);
+	joint_position_prev_.resize(n_dof_);
 	joint_velocity_.resize(n_dof_);
+	joint_velocity_lpf_.resize(n_dof_);
 	joint_effort_.resize(n_dof_);
 	joint_effort_command_.resize(n_dof_);
 	joint_position_command_.resize(n_dof_);
@@ -111,9 +113,9 @@ bool GinkoRobotHWSim::initSim(const std::string& robot_namespace,
 
 		// Add data from transmission
 		joint_names_[j] = transmissions[j].joints_[0].name_;
-		joint_position_[j] = 1.0;
+		joint_position_[j] = 0.0;
 		joint_velocity_[j] = 0.0;
-		joint_effort_[j] = 1.0;  // N/m for continuous joints
+		joint_effort_[j] = 0.0;  // N/m for continuous joints
 		joint_effort_command_[j] = 0.0;
 		joint_position_command_[j] = 0.0;
 		joint_velocity_command_[j] = 0.0;
@@ -303,8 +305,15 @@ void GinkoRobotHWSim::readSim(ros::Time time, ros::Duration period) {
 			joint_position_[j] += angles::shortest_angular_distance(
 					joint_position_[j], position);
 		}
-		joint_velocity_[j] = sim_joints_[j]->GetVelocity(0);
+//		joint_velocity_[j] = sim_joints_[j]->GetVelocity(0);
+		joint_velocity_[j] = (joint_position_[j] - joint_position_prev_[j]) / period.toSec();
 		joint_effort_[j] = sim_joints_[j]->GetForce((unsigned int) (0));
+
+		//update previous data
+		joint_position_prev_[j] = joint_position_[j];
+//		joint_velocity_lpf_[j] = joint_velocity_lpf_[j] * 0.97 + joint_velocity_[j] * 0.03;
+		joint_velocity_lpf_[j] = joint_velocity_lpf_[j] * 0.99 + joint_velocity_[j] * 0.01;
+//		joint_velocity_lpf_[j] = joint_velocity_lpf_[j] * 0.9 + joint_velocity_[j] * 0.1;
 	}
 }
 
@@ -419,7 +428,7 @@ void GinkoRobotHWSim::writeSim(ros::Time time, ros::Duration period) {
 			const double duty = clamp(
 					pid_controllers_[j].computeCommand(error, period),
 					-duty_limit, duty_limit);
-			const double speed = joint_velocity_[j];
+			const double speed = joint_velocity_lpf_[j];
 			const double effort = motor_models_[j].duty2Torque(duty, speed);
 //          const double effort = motor_model_.duty2Torque(duty);
 			sim_joints_[j]->SetForce(0, effort);

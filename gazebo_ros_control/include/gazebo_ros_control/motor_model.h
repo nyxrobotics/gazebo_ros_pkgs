@@ -12,6 +12,7 @@ class MotorElectricCharacteristics
 		double motor_noload_current_ = 0.30;
 		double motor_stall_torque_ = 2.75;
 		double motor_stall_current_ = 1.90;
+		double viscocity_ = 1.0;//[N*m*sec/rad]
 };
 
 class MotorHeatCharacteristics

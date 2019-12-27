@@ -31,7 +31,7 @@ double MotorModel::duty2Torque(double Duty){
 
 double MotorModel::duty2Torque(double Duty, double Speed){
 	double torque = 0.;
-	static double speed_tmp = Speed;
+	double speed_tmp = Speed;
 	if(speed_tmp > default_electric_characteristics_.motor_noload_speed_){
 		speed_tmp = default_electric_characteristics_.motor_noload_speed_;
 	}else if(speed_tmp < -default_electric_characteristics_.motor_noload_speed_){
@@ -41,23 +41,38 @@ double MotorModel::duty2Torque(double Duty, double Speed){
 	if(use_heat_sim_ == false){
 		if(Duty > 0.0001){
 			torque = default_electric_characteristics_.motor_stall_torque_ * (sqrt(fabs(Duty)) - (speed_tmp/default_electric_characteristics_.motor_noload_speed_));
-//			if(torque < 0.0){
-//				torque = 0.0;
+//			if(torque > sqrt(fabs(Duty)) * default_electric_characteristics_.motor_stall_torque_){
+//				torque = sqrt(fabs(Duty)) * default_electric_characteristics_.motor_stall_torque_;
 //			}
-			if(torque > sqrt(fabs(Duty)) * default_electric_characteristics_.motor_stall_torque_){
-				torque = sqrt(fabs(Duty)) * default_electric_characteristics_.motor_stall_torque_;
+//			if(default_electric_characteristics_.viscocity_ > 0.0001 && speed_tmp >  0.0001){
+//				torque -= speed_tmp * default_electric_characteristics_.viscocity_;
+//			}
+			if(torque < 0.0){
+				torque = 0.0;
 			}
 		}else if(Duty < -0.0001){
 			torque = default_electric_characteristics_.motor_stall_torque_ * -(sqrt(fabs(Duty)) - (speed_tmp/default_electric_characteristics_.motor_noload_speed_));
-//			if(torque > 0.0){
-//				torque = 0.0;
+//			if(torque < -sqrt(fabs(Duty)) * default_electric_characteristics_.motor_stall_torque_){
+//				torque = -sqrt(fabs(Duty)) * default_electric_characteristics_.motor_stall_torque_;
 //			}
-			if(torque < -sqrt(fabs(Duty)) * default_electric_characteristics_.motor_stall_torque_){
-				torque = -sqrt(fabs(Duty)) * default_electric_characteristics_.motor_stall_torque_;
+//			if(default_electric_characteristics_.viscocity_ > 0.0001 && speed_tmp < -0.0001){
+//				torque -= speed_tmp * default_electric_characteristics_.viscocity_;
+//			}
+			if(torque > 0.0){
+				torque = 0.0;
 			}
 		}else{
 			torque = 0.0;
 		}
+
+//		speed_tmp = Speed;
+//		if(speed_tmp > 10.0){
+//			speed_tmp = 10.0;
+//		}else if(speed_tmp < -10.0){
+//			speed_tmp = -10.0;
+//		}
+		torque -= speed_tmp * default_electric_characteristics_.viscocity_;
+
 	}
 	return torque;
 }
